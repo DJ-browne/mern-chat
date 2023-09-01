@@ -8,6 +8,7 @@ export default function Chat() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [newMessage, setNewMessage] = useState("");
+  const [message, setMessage] = useState([]);
   const { username, id } = useContext(UserContext);
 
   useEffect(() => {
@@ -27,26 +28,30 @@ export default function Chat() {
   function handleMessage(e) {
     
     const messageData = JSON.parse(e.data);
-
+    console.log({e, messageData})
     if ("onlineUserData" in messageData) {
       showOnlineUsers(messageData.onlineUserData);
+    } else if ('text' in messageData) {
+      setMessage(prev => ([...prev, {isOur:false, text: messageData.text}]))
     }
   }
 
   function sendMessage(e) {
     e.preventDefault();
     ws.send(
-      JSON.stringify({
-        message: {
+      JSON.stringify({        
           recipient: selectedUserId,
-          text: newMessage,
-        },
+          text: newMessage,        
       })
     );
+    setNewMessage('');
+    setMessage(prev => ([...prev, {text: newMessage, isOur : true}]))
   }
 
   const onlineUsersExclOurUser = { ...onlineUsers };
   delete onlineUsersExclOurUser[id];
+
+  const messagesWithoutDupes = messages;
 
   return (
     <>
@@ -88,6 +93,13 @@ export default function Chat() {
                 <div className="text-gray-300">
                   &larr; Select a friend to chat!
                 </div>
+              </div>
+            )}
+            {!!selectedUserId && (
+              <div>
+                {messages.map(message => (
+                  <div>{message.text}</div>
+                ))}
               </div>
             )}
           </div>
